@@ -7,6 +7,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -126,6 +127,10 @@ public class StoriesProgressView extends LinearLayout {
         p.setMax();
     }
 
+    public int getCurrent() {
+        return current;
+    }
+
     /**
      * Reverse current story
      */
@@ -148,6 +153,20 @@ public class StoriesProgressView extends LinearLayout {
             progressBars.get(i).setDuration(duration);
             progressBars.get(i).setCallback(callback(i));
         }
+    }
+
+    public void setDurationAt(int pos, long duration){
+        if (pos < 0 || pos >= progressBars.size() - 1)
+            return;
+        progressBars.get(pos).setDuration(duration);
+        progressBars.get(pos).setCallback(callback(pos));
+    }
+
+    public void setCurrentDuration(long duration) {
+        if (current < 0)
+            return;
+        progressBars.get(current).setDuration(duration);
+        progressBars.get(current).setCallback(callback(current));
     }
 
     /**
@@ -202,7 +221,7 @@ public class StoriesProgressView extends LinearLayout {
      * Start progress animation
      */
     public void startStories() {
-        progressBars.get(0).startProgress();
+        startStories(0);
     }
 
     /**
@@ -212,6 +231,9 @@ public class StoriesProgressView extends LinearLayout {
         for (int i = 0; i < from; i++) {
             progressBars.get(i).setMaxWithoutCallback();
         }
+        for (int i = from + 1; i < progressBars.size(); i++)
+            progressBars.get(i).setMinWithoutCallback();
+
         progressBars.get(from).startProgress();
     }
 
@@ -238,5 +260,10 @@ public class StoriesProgressView extends LinearLayout {
     public void resume() {
         if (current < 0) return;
         progressBars.get(current).resumeProgress();
+    }
+
+    public void setCurrentProgress(long val) {
+        if (current < 0) return;
+        progressBars.get(current).setCurrentProgress(val);
     }
 }

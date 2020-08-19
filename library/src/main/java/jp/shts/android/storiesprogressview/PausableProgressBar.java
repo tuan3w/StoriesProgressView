@@ -5,6 +5,7 @@ import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -22,6 +23,7 @@ final class PausableProgressBar extends FrameLayout {
 
     private View frontProgressView;
     private View maxProgressView;
+    private long startTime, runningTime;
 
     private PausableScaleAnimation animation;
     private long duration = DEFAULT_PROGRESS_DURATION;
@@ -30,6 +32,10 @@ final class PausableProgressBar extends FrameLayout {
     interface Callback {
         void onStartProgress();
         void onFinishProgress();
+    }
+
+    interface ProgressRetrieval {
+        long getProgress();
     }
 
     public PausableProgressBar(Context context) {
@@ -49,6 +55,9 @@ final class PausableProgressBar extends FrameLayout {
 
     public void setDuration(long duration) {
         this.duration = duration;
+        if (animation != null){
+            animation.setDuration(duration);
+        }
     }
 
     public void setCallback(@NonNull Callback callback) {
@@ -64,7 +73,7 @@ final class PausableProgressBar extends FrameLayout {
     }
 
     void setMinWithoutCallback() {
-        maxProgressView.setBackgroundResource(R.color.progress_secondary);
+        maxProgressView.setBackgroundResource(R.drawable.progress_background);
 
         maxProgressView.setVisibility(VISIBLE);
         if (animation != null) {
@@ -74,7 +83,7 @@ final class PausableProgressBar extends FrameLayout {
     }
 
     void setMaxWithoutCallback() {
-        maxProgressView.setBackgroundResource(R.color.progress_max_active);
+        maxProgressView.setBackgroundResource(R.drawable.progress_foreground);
 
         maxProgressView.setVisibility(VISIBLE);
         if (animation != null) {
@@ -84,7 +93,7 @@ final class PausableProgressBar extends FrameLayout {
     }
 
     private void finishProgress(boolean isMax) {
-        if (isMax) maxProgressView.setBackgroundResource(R.color.progress_max_active);
+        if (isMax) maxProgressView.setBackgroundResource(R.drawable.progress_foreground);
         maxProgressView.setVisibility(isMax ? VISIBLE : GONE);
         if (animation != null) {
             animation.setAnimationListener(null);
@@ -119,17 +128,28 @@ final class PausableProgressBar extends FrameLayout {
         });
         animation.setFillAfter(true);
         frontProgressView.startAnimation(animation);
+        startTime = System.currentTimeMillis();
     }
 
     public void pauseProgress() {
         if (animation != null) {
             animation.pause();
+            runningTime = System.currentTimeMillis() - startTime;
         }
     }
 
     public void resumeProgress() {
         if (animation != null) {
+            // adjust startTime
+            startTime = (System.currentTimeMillis() - runningTime);
             animation.resume();
+        }
+    }
+
+    public void setCurrentProgress(long val) {
+        if (animation != null) {
+            long adjustTime = val - (System.currentTimeMillis() - startTime);
+            animation.setAdjustTime(adjustTime);
         }
     }
 
@@ -145,6 +165,7 @@ final class PausableProgressBar extends FrameLayout {
 
         private long mElapsedAtPause = 0;
         private boolean mPaused = false;
+        private long adjustTime = 0;
 
         PausableScaleAnimation(float fromX, float toX, float fromY,
                                float toY, int pivotXType, float pivotXValue, int pivotYType,
@@ -161,7 +182,12 @@ final class PausableProgressBar extends FrameLayout {
             if (mPaused) {
                 setStartTime(currentTime - mElapsedAtPause);
             }
-            return super.getTransformation(currentTime, outTransformation, scale);
+
+            return super.getTransformation(currentTime + adjustTime, outTransformation, scale);
+        }
+
+        void setAdjustTime(long val) {
+            adjustTime = val;
         }
 
         /***

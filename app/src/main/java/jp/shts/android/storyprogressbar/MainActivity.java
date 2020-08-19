@@ -1,7 +1,10 @@
 package jp.shts.android.storyprogressbar;
 
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -58,12 +61,12 @@ public class MainActivity extends AppCompatActivity implements StoriesProgressVi
 
         storiesProgressView = (StoriesProgressView) findViewById(R.id.stories);
         storiesProgressView.setStoriesCount(PROGRESS_COUNT);
-        storiesProgressView.setStoryDuration(3000L);
+        storiesProgressView.setStoryDuration(1000L);
         // or
         // storiesProgressView.setStoriesCountWithDurations(durations);
         storiesProgressView.setStoriesListener(this);
 //        storiesProgressView.startStories();
-        counter = 2;
+        counter = 0;
         storiesProgressView.startStories(counter);
 
         image = (ImageView) findViewById(R.id.image);
@@ -92,17 +95,46 @@ public class MainActivity extends AppCompatActivity implements StoriesProgressVi
 
     @Override
     public void onNext() {
-        image.setImageResource(resources[++counter]);
+        counter = storiesProgressView.getCurrent() + 1;
+
+        if (counter > resources.length - 1) return;
+
+        // try to change progress duration
+        if (counter == 1) {
+            storiesProgressView.setDurationAt(counter, 10000);
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (storiesProgressView.getCurrent() != 2)
+                        return;
+                    storiesProgressView.setCurrentProgress(1000l);
+
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (storiesProgressView.getCurrent() != 2)
+                                return;
+                            storiesProgressView.setCurrentProgress(7000l);
+                        }
+                    }, 2000);
+                }
+            }, 4000);
+        }
+        image.setImageResource(resources[counter]);
     }
 
     @Override
     public void onPrev() {
+        counter = storiesProgressView.getCurrent() - 1;
         if ((counter - 1) < 0) return;
         image.setImageResource(resources[--counter]);
     }
 
     @Override
     public void onComplete() {
+        counter = 0;
+        storiesProgressView.startStories(0);
     }
 
     @Override

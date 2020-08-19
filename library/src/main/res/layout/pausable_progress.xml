@@ -8,13 +8,13 @@
         android:id="@+id/back_progress"
         android:layout_width="match_parent"
         android:layout_height="@dimen/progress_bar_height"
-        android:background="@color/progress_secondary" />
+        android:background="@drawable/progress_background" />
 
     <View
         android:id="@+id/front_progress"
         android:layout_width="match_parent"
         android:layout_height="@dimen/progress_bar_height"
-        android:background="@color/progress_primary"
+        android:background="@drawable/progress_foreground"
         android:visibility="invisible"
         tools:visibility="visible"/>
 
